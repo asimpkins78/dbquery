@@ -63,8 +63,8 @@
     <pathelement location="${basedir}/deps/hibernate-core-5.1.1.Final.jar"/>
   </path>
   
-  <path id="library.simpkins-query.classpath">
-    <pathelement location="${basedir}/deps/simpkins-query.jar"/>
+  <path id="library.query.classpath">
+    <pathelement location="${basedir}/deps/query.jar"/>
   </path>
   
   <!-- Modules -->
@@ -86,26 +86,26 @@
   </path>
   
   <path id="dbquery.module.production.classpath">
-    <path refid="library.simpkins-query.classpath"/>
+    <path refid="library.query.classpath"/>
     <path refid="library.hibernate-core-5.1.1.final.classpath"/>
   </path>
   
   <path id="dbquery.runtime.production.module.classpath">
     <pathelement location="${dbquery.output.dir}"/>
-    <path refid="library.simpkins-query.classpath"/>
+    <path refid="library.query.classpath"/>
     <path refid="library.hibernate-core-5.1.1.final.classpath"/>
   </path>
   
   <path id="dbquery.module.classpath">
     <pathelement location="${dbquery.output.dir}"/>
-    <path refid="library.simpkins-query.classpath"/>
+    <path refid="library.query.classpath"/>
     <path refid="library.hibernate-core-5.1.1.final.classpath"/>
   </path>
   
   <path id="dbquery.runtime.module.classpath">
     <pathelement location="${dbquery.testoutput.dir}"/>
     <pathelement location="${dbquery.output.dir}"/>
-    <path refid="library.simpkins-query.classpath"/>
+    <path refid="library.query.classpath"/>
     <path refid="library.hibernate-core-5.1.1.final.classpath"/>
   </path>
   
