@@ -5,19 +5,19 @@ A DbQuery is started by providing the entity class that represents the table in 
 
 Use the constructor directly:
 
-``` c#
+``` java
 DbQuery<Person> dbQuery = new DbQuery<>(Person.class, entityManager.unwrap(Session.class));
 ```
 
 Use the the static from() method:
 
-``` c#
+``` java
 DbQuery<Person> dbQuery = DbQuery.from(Person.class, entityManager.unwrap(Session.class));
 ```
 
 Create a private method and use that:
 
-``` c#
+``` java
 private <T> DbQuery<T> from(Class<T> type) {
   return DbQuery.from(type, entityManager.unwrap(Session.class));
 }
@@ -30,21 +30,21 @@ A DbQuery is not executed and does not return results until you make an output c
 
 You can fetch the entire result set as a List or an array:
 
-``` c#
+``` java
 List<Person> persons = from(Person.class).toList();
 Person[] persons = from(Person.class).toArray();
 ```
 
 You can also easily get a List or an array typed as a different superclass:
 
-``` c#
+``` java
 List<PersonInfo> personInfo = from(Person.class).toList(PersonInfo.class);
 PersonInfo[] persons = from(Person.class).toArray(PersonInfo.class);
 ```
 
 You can also fetch an individual result with various built in error handling:
 
-``` c#
+``` java
 // no error
 Person person = from(Person.class).firstOrNull();
 // error if no result
@@ -55,44 +55,53 @@ Person person = from(Person.class).singleOrNull();
 Person person = from(Person.class).single();
 ```
 
+You can customize the exceptions thrown by the above calls with the following:
+``` java
+Person person = from(Person.class)
+.setNoResultException(new RuntimeException("My custom no result exception"))
+.setMultipleResultsException(new RuntimeException("My custom multiple results exception"))
+.single();
+```
+
 ## Filtering a DbQuery
 
 So far we've been fetching the all the rows of the database, but normally you'll want to filter out rows with one or more where clauses.  
 
 A where clause is created first by declaring which column will be checked, then by declaring the filtering operation.  The example below checks for equality, but all the standard SQL operations have their own method.
 
-``` c#
+``` java
+// select * from person where first_name = 'Andrew';
 List<Person> persons = from(Person.class)
 .where(Person.FirstName).isEqualTo("Andrew")
 .toList();
-// select * from person where first_name = 'Andrew';
 ```
 
 Multiple where clauses can be added to query, and by default they will be added as a conjunction (AND):
 
-``` c#
+``` java
+// select * from person where first_name = 'Andrew' and last_name = 'Simpkins';
 List<Person> persons = from(Person.class)
 .where(Person.FirstName).isEqualTo("Andrew")
 .where(Person.LastName).isEqualTo("Simpkins")
 .toList();
-// select * from person where first_name = 'Andrew' and last_name = 'Simpkins';
 ```
 
 If a set of where clauses should be treated as a disjunction (OR) then a disjuction clause can be created and then terminated with the close() method:
 
-``` c#
+``` java
+// select * from person where first_name = 'Andrew' or last_name = 'Simpkins';
 List<Person> persons = from(Person.class)
 .openDisjuction()
 	.where(Person.FirstName).isEqualTo("Andrew")
 	.where(Person.LastName).isEqualTo("Simpkins")
 .close()
 .toList();
-// select * from person where first_name = 'Andrew' or last_name = 'Simpkins';
 ```
 
 Disjunctions and conjunctions can be nested inside each other as needed:
 
-``` c#
+``` java
+// select * from person where first_name = 'Andrew' or (last_name = 'Simpkins' and first_name = 'Andy');
 List<Person> persons = from(Person.class)
 .openDisjuction()
 	.where(Person.FirstName).isEqualTo("Andrew")
@@ -102,38 +111,37 @@ List<Person> persons = from(Person.class)
 	.close()
 .close()
 .toList();
-// select * from person where first_name = 'Andrew' or (last_name = 'Simpkins' and first_name = 'Andy');
 ```
 
 ## Ordering a DbQuery
 
 The results of a DbQuery can be ordered by making one or more ordering calls.  The two most common are:
 
-``` c#
+``` java
+// select * from person order by last_name asc, first_name desc;
 List<Person> persons = from(Person.class)
 .orderBy(Person.LastName)
 .orderByDescending(Person.FirstName)
 .toList();
-// select * from person order by last_name asc, first_name desc;
 ```
 
 There are also a few more advanced options.  The way null values are handled can be reversed:
 
-``` c#
+``` java
 List<Person> persons = from(Person.class).orderByNullsFirst(Person.FirstName).toList();
 List<Person> persons = from(Person.class).orderByDescendingNullsLast(Person.FirstName).toList();
 ```
   
 Also, ordering can apply the lower() function to each the column:
 
-``` c#
+``` java
 List<Person> persons = from(Person.class).orderByIgnoreCase(Person.FirstName).toList();
 List<Person> persons = from(Person.class).orderByDescendingIgnoreCase(Person.FirstName).toList();
 ```
 
 Or both:
 
-``` c#
+``` java
 List<Person> persons = from(Person.class).orderByNullsFirstIgnoreCase(Person.FirstName).toList();
 List<Person> persons = from(Person.class).orderByDescendingNullsLastIgnoreCase(Person.FirstName).toList();
 ```
@@ -142,7 +150,7 @@ List<Person> persons = from(Person.class).orderByDescendingNullsLastIgnoreCase(P
 
 The results from a DbQuery can be limited or offset to pull just portion of the result from the database:
 
-``` c#
+``` java
 // select * from person limit 50;
 List<Person> persons = from(Person.class).limit(null, 50).toList();
 // select * from person offset 50;
@@ -155,37 +163,37 @@ List<Person> persons = from(Person.class).limit(50, 50).toList();
 
 Related table rows can be marked to be pulled along with the rows in the result in order to fetch all data in a single query.
 
-``` c#
+``` java
+// select * from person left join employer on employer.id = person.employer_id;
 List<Person> persons = from(Person.class)
 .loadWith(Person.Employer)
 .toList();
-// select * from person left join employer on employer.id = person.employer_id;
 ```
 
 Alternatively you can specify that related table rows be fetched but in a separate query for efficiency purposes.
 
-``` c#
+``` java
+// select * from person;
+// select * from pets where pet.person_id in (...);
 List<Person> persons = from(Person.class)
 .loadAfter(Person.Pets)
 .toList();
-// select * from person;
-// select * from pets where pet.person_id in (...);
 ```
 
 To minimize code you can also indicate that all joins specified in any where, order by, or sub query clauses be fetched eagerly:
-``` c#
+``` java
+// select * from person left join employer on employer.id = person.employer_id;
 List<Person> persons = from(Person.class)
 .loadWithAllJoins()
 .where(Person.Employer.join(Employer.Id)).isEqualTo(123)
 .toList();
-// select * from person left join employer on employer.id = person.employer_id;
 ```
 
 ## Dynamically applying criteria
 
 Sometimes you want criteria to only be applied to the DbQuery in certain cases.  In the following example, the where clause will only be applied if the excludeChildren variable is true:
 
-``` c#
+``` java
 List<Person> persons = from(Person.class)
 .when(excludeChildren, dbQuery -> dbQuery.where(Person.Age).isGreaterThanOrEqualTo(21))
 .toList();
@@ -195,16 +203,16 @@ List<Person> persons = from(Person.class)
 
 Instead of selecting the entire entity you can select just one or more columns.
 
-``` c#
-List<String> firstNames = from(Person.class).select(Person.FirstName);
+``` java
 // select first_name from person;
+List<String> firstNames = from(Person.class).select(Person.FirstName);
 ```
 
 When more than one column is specified then a DbResultRow will be returned instead.  This is essentially a map that allows you to fetch the database value by the same identifier you selected it with.
 
-``` c#
-List<DbResultRow> results = from(Person.class).select(Person.FirstName, Person.LastName);
+``` java
 // select first_name, last_name from person;
+List<DbResultRow> results = from(Person.class).select(Person.FirstName, Person.LastName);
 for (DbResultRow row in results) {
   String firstName = row.get(Person.FirstName);
   String lastName = row.get(Person.LastName);
@@ -213,11 +221,11 @@ for (DbResultRow row in results) {
 
 Either of the above calls can also be converted into a select distinct as well:
 
-``` c#
-List<String> firstNames = from(Person.class).selectDistinct(Person.FirstName);
+``` java
 // select distinct first_name from person;
-List<DbResultRow> results = from(Person.class).select(Person.FirstName, Person.LastName);
+List<String> firstNames = from(Person.class).selectDistinct(Person.FirstName);
 // select distinct first_name, last_name from person;
+List<DbResultRow> results = from(Person.class).selectDistinct(Person.FirstName, Person.LastName);
 ```
 
 Finally, any of the above calls can fetch individual results with error handling by appending firstOrNull, first, singleOrNull, or single to the method call as detailed in the earlier Executing a DbQuery section.
@@ -226,7 +234,7 @@ Finally, any of the above calls can fetch individual results with error handling
 
 There are methods to select individual aggregate results for a DbQuery:
 
-```c#
+```java
 long count = from(Person.class).count();
 long distinctCount = from(Person.class).countDistinct(Person.LastName);
 Integer sum = from(Person.class).sum(Person.Age);
@@ -240,9 +248,9 @@ Boolean none = from(Person.class).none(Person.IsDeceased);
 
 You can also select more than one aggregate which will also use the DbResultRow object.  In this example the result List will contain no more than one row.
 
-``` c#
-List<DbResultRow> results = from(Person.class).aggregate(Person.Age.min(), Person.Age.max());
+``` java
 // select min(age), max(age) from person;
+List<DbResultRow> results = from(Person.class).aggregate(Person.Age.min(), Person.Age.max());
 for (DbResultRow row : results) {
   Integer minimum = results.get(Person.Age.min());
   Integer maximum = results.get(Person.Age.max());
@@ -251,9 +259,9 @@ for (DbResultRow row : results) {
 
 You can also specify a grouping aggregation in which case the result List may contain more than one row, grouped by the provided grouping aggregations:
 
-``` c#
-List<DbResultRow> results = from(Person.class).aggregate(Person.FirstName.groupBy(), Person.Gender.groupBy(), Person.Age.avg());
+``` java
 // select first_name, gender, avg(age) from person group by first_name, gender
+List<DbResultRow> results = from(Person.class).aggregate(Person.FirstName.groupBy(), Person.Gender.groupBy(), Person.Age.avg());
 for (DbResultRow row : results) {
   String firstName = results.get(Person.FirstName.groupBy());
   String gender = results.get(Person.Gender.groupBy());
